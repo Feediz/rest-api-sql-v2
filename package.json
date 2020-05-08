@@ -21,6 +21,7 @@
     "cross-env": "^5.2.1",
     "debug": "^2.6.9",
     "express": "^4.17.1",
+    "express-validator": "^6.4.1",
     "http-errors": "^1.7.3",
     "morgan": "^1.10.0",
     "path": "^0.12.7",

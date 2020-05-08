@@ -1,4 +1,5 @@
 const express = require("express");
+const { check, validationResult } = require("express-validator/check");
 const router = express.Router();
 const User = require("../models").User;
 const Sequelize = require("sequelize");
@@ -31,23 +32,47 @@ router.get(
   })
 );
 
+const validateUsers = [
+  check("firstName")
+    .exists({ checkNull: true, checkFalsy: true })
+    .withMessage('Please provide a value for "firstName"'),
+  check("lastName")
+    .exists({ checkNull: true, checkFalsy: true })
+    .withMessage('Please provide a value for "lastName"'),
+  check("emailAddress")
+    .exists({ checkNull: true, checkFalsy: true })
+    .withMessage('Please provide a value for "emailAddress"'),
+  check("password")
+    .exists({ checkNull: true, checkFalsy: true })
+    .withMessage('Please provide a value for "password"'),
+];
 /**
  * @route /users
  * @method post
  */
 router.post(
   "/users",
+  validateUsers,
   asyncHandler(async (req, res) => {
+    const errors = validationResult(req);
     let user;
-    try {
-      user = await User.create(req.body);
-      if (user) {
-        res.status(201).redirect("/");
-      }
-    } catch (er) {
-      if (err.name === "SequelizeValidationError") {
-      } else {
-        throw error; // error will be caught in the asyncHandler's catch block
+
+    if (!errors.isEmpty()) {
+      const errMsg = errors.array().map((err) => err.msg);
+
+      // return the validation errors to client
+      res.status(400).json({ errors: errMsg });
+    } else {
+      try {
+        user = await User.create(req.body);
+        if (user) {
+          res.status(201).redirect("/");
+        }
+      } catch (er) {
+        if (err.name === "SequelizeValidationError") {
+        } else {
+          throw error; // error will be caught in the asyncHandler's catch block
+        }
       }
     }
   })

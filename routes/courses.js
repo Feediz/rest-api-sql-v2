@@ -1,4 +1,5 @@
 const express = require("express");
+const { check, validationResult } = require("express-validator/check");
 const router = express.Router();
 const Course = require("../models").Course;
 const Sequelize = require("sequelize");
@@ -45,28 +46,47 @@ router.get(
   })
 );
 
+const validateCourse = [
+  check("title")
+    .exists({ checkNull: true, checkFalsy: true })
+    .withMessage('Please provide a value for "firstName"'),
+  check("description")
+    .exists({ checkNull: true, checkFalsy: true })
+    .withMessage('Please provide a value for "description"'),
+];
 /**
  * @route /courses
  * @method post
  */
 router.post(
   "/courses",
+  validateCourse,
   asyncHandler(async (req, res) => {
     // Creates a course, sets the Location header to the URI for the course, and returns no content
-    let course;
-    try {
-      course = Course.create(req.body);
-      if (course) {
-        res.status(201).send("");
-      } else {
-        res.status(404).send(""); // WHAT, why 404
-      }
-    } catch (er) {
-      if (er.name === "SequelizeValidationError") {
-        // check for validation errors
-        //course = await Course
-      } else {
-        throw error;
+    const errors = validationResult(req);
+
+    // check if we have errors
+    if (!errors.isEmpty()) {
+      const errorMessages = errors.array().map((err) => err.msg);
+
+      // return the validation errors to client
+      res.status(400).json({ errors: errorMessages });
+    } else {
+      let course;
+      try {
+        course = Course.create(req.body);
+        if (course) {
+          res.status(201).send("");
+        } else {
+          res.status(404).send(""); // WHAT, why 404
+        }
+      } catch (er) {
+        if (er.name === "SequelizeValidationError") {
+          // check for validation errors
+          //course = await Course
+        } else {
+          throw error;
+        }
       }
     }
   })
@@ -78,10 +98,29 @@ router.post(
  */
 router.put(
   "/courses/:id",
+  validateCourse,
   asyncHandler(async (req, res) => {
     //Updates a course and returns no content
+    const errors = validationResult(req);
 
-    res.status(204).send("");
+    // check if we have validation errors
+    if (!errors.isEmpty()) {
+      const errorMsgs = errors.array().map((err) => err.msg);
+
+      // return the validation errors to client
+      res.status(400).json({ errors: errorMsgs });
+    } else {
+      let course;
+      try {
+        course = await Course.findByPk(req.params.id);
+        if (course) {
+          await course.update(req.body);
+        } else {
+          res.sendStatus(404);
+        }
+      } catch (err) {}
+      res.status(204).send("");
+    }
   })
 );
 
