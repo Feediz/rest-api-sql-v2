@@ -49,7 +49,7 @@ router.get(
 const validateCourse = [
   check("title")
     .exists({ checkNull: true, checkFalsy: true })
-    .withMessage('Please provide a value for "firstName"'),
+    .withMessage('Please provide a value for "title"'),
   check("description")
     .exists({ checkNull: true, checkFalsy: true })
     .withMessage('Please provide a value for "description"'),

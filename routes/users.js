@@ -4,6 +4,7 @@ const router = express.Router();
 const User = require("../models").User;
 const Sequelize = require("sequelize");
 const Op = Sequelize.Op;
+const bcryptjs = require("bcryptjs");
 
 // async handler function to wrap each route
 function asyncHandler(cb) {
@@ -64,14 +65,15 @@ router.post(
       res.status(400).json({ errors: errMsg });
     } else {
       try {
+        req.body.password = bcryptjs.hashSync(req.body.password);
         user = await User.create(req.body);
         if (user) {
           res.status(201).redirect("/");
         }
       } catch (er) {
-        if (err.name === "SequelizeValidationError") {
+        if (er.name === "SequelizeValidationError") {
         } else {
-          throw error; // error will be caught in the asyncHandler's catch block
+          throw er; // error will be caught in the asyncHandler's catch block
         }
       }
     }
