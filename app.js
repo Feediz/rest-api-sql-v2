@@ -3,13 +3,16 @@
 // load modules
 const express = require("express");
 const morgan = require("morgan");
-const path = require("path");
-const bodyParser = require("body-parser");
 
 const { sequelize } = require("./models");
+
+// user routes
 const usersRoutes = require("./routes/users");
+
+// course routes
 const courseRoutes = require("./routes/courses");
 
+// connect to db
 sequelize
   .authenticate()
   .then(() => {
@@ -29,12 +32,8 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-//app.use(express.static(path.join(__dirname, "public")));
-
 // setup morgan which gives us http request logging
 app.use(morgan("dev"));
-
-// TODO setup your api routes here
 
 // setup a friendly greeting for the root route
 app.get("/", (req, res) => {

@@ -2,8 +2,11 @@ const express = require("express");
 const { check, validationResult } = require("express-validator/check");
 const router = express.Router();
 const Course = require("../models").Course;
+const User = require("../models").User;
 const Sequelize = require("sequelize");
-const Op = Sequelize.Op;
+
+// helper function to check if user is authenticated
+const authenticateUser = require("../helper/authenticateUser");
 
 // async handler function to wrap each route
 function asyncHandler(cb) {
@@ -18,8 +21,6 @@ function asyncHandler(cb) {
 }
 
 // routes
-//router.get('/courses', asyncHandler(async (req, res) => {}));
-
 /**
  * @route /courses
  * @method get
@@ -46,6 +47,7 @@ router.get(
   })
 );
 
+// validate posted values
 const validateCourse = [
   check("title")
     .exists({ checkNull: true, checkFalsy: true })
@@ -60,12 +62,13 @@ const validateCourse = [
  */
 router.post(
   "/courses",
+  authenticateUser,
   validateCourse,
   asyncHandler(async (req, res) => {
     // Creates a course, sets the Location header to the URI for the course, and returns no content
     const errors = validationResult(req);
 
-    // check if we have errors
+    // check if we have validation errors
     if (!errors.isEmpty()) {
       const errorMessages = errors.array().map((err) => err.msg);
 
@@ -78,15 +81,10 @@ router.post(
         if (course) {
           res.status(201).send("");
         } else {
-          res.status(404).send(""); // WHAT, why 404
+          res.status(404).send("");
         }
       } catch (er) {
-        if (er.name === "SequelizeValidationError") {
-          // check for validation errors
-          //course = await Course
-        } else {
-          throw error;
-        }
+        throw er;
       }
     }
   })
@@ -98,6 +96,7 @@ router.post(
  */
 router.put(
   "/courses/:id",
+  authenticateUser,
   validateCourse,
   asyncHandler(async (req, res) => {
     //Updates a course and returns no content
@@ -118,7 +117,9 @@ router.put(
         } else {
           res.sendStatus(404);
         }
-      } catch (err) {}
+      } catch (err) {
+        throw err;
+      }
       res.status(204).send("");
     }
   })
@@ -130,6 +131,7 @@ router.put(
  */
 router.delete(
   "/courses/:id",
+  authenticateUser,
   asyncHandler(async (req, res) => {
     //Deletes a course and returns no content
     try {
@@ -140,7 +142,9 @@ router.delete(
       } else {
         res.status(404).send("");
       }
-    } catch (er) {}
+    } catch (er) {
+      throw er;
+    }
   })
 );
 

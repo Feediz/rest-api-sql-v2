@@ -3,6 +3,7 @@ const Sequelize = require("sequelize");
 module.exports = (sequelize) => {
   class User extends Sequelize.Model {}
 
+  // init the User model
   User.init(
     {
       id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
@@ -14,6 +15,7 @@ module.exports = (sequelize) => {
     { sequelize }
   );
 
+  // set up the relationship with the Course table/model
   User.associate = (models) => {
     User.hasMany(models.Course, {
       as: "user", // alias
