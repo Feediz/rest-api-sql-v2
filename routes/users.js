@@ -1,7 +1,8 @@
 const express = require("express");
 const { check, validationResult } = require("express-validator/check");
 const router = express.Router();
-const User = require("../models").User;
+//const User = require("../models").User;
+const { Course, User } = require("../models");
 const bcryptjs = require("bcryptjs");
 
 // helper function to check if user is authenticated
@@ -28,8 +29,13 @@ router.get(
   "/users",
   authenticateUser,
   asyncHandler(async (req, res) => {
-    const users = await User.findAndCountAll();
-    res.send(users);
+    const user = req.currentUser;
+    const userInfo = {};
+    userInfo.firstName = user.firstName;
+    userInfo.lastName = user.lastName;
+    userInfo.emailAddress = user.emailAddress;
+
+    res.json(userInfo);
   })
 );
 

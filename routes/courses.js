@@ -1,9 +1,7 @@
 const express = require("express");
 const { check, validationResult } = require("express-validator/check");
 const router = express.Router();
-const Course = require("../models").Course;
-const User = require("../models").User;
-const Sequelize = require("sequelize");
+const { Course, User } = require("../models");
 
 // helper function to check if user is authenticated
 const authenticateUser = require("../helper/authenticateUser");
@@ -28,9 +26,24 @@ function asyncHandler(cb) {
 router.get(
   "/courses",
   asyncHandler(async (req, res) => {
-    // Returns a list of courses (including the user that owns each course)
-    const courses = await Course.findAndCountAll();
-    res.send(courses);
+    // Returns a list of courses (including the user id that owns each course)
+    const courses = await Course.findAndCountAll({
+      include: [
+        {
+          model: User,
+          as: "user",
+        },
+      ],
+      attributes: [
+        "id",
+        "title",
+        "description",
+        "estimatedTime",
+        "materialsNeeded",
+        "userId",
+      ],
+    });
+    res.json(courses.rows);
   })
 );
 
@@ -42,7 +55,22 @@ router.get(
   "/courses/:id",
   asyncHandler(async (req, res) => {
     // Returns a the course (including the user that owns the course) for the provided course ID
-    const courses = await Course.findByPk(req.params.id);
+    const courses = await Course.findByPk(req.params.id, {
+      include: [
+        {
+          model: User,
+          as: "user",
+        },
+      ],
+      attributes: [
+        "id",
+        "title",
+        "description",
+        "estimatedTime",
+        "materialsNeeded",
+        "userId",
+      ],
+    });
     res.send(courses);
   })
 );
@@ -102,6 +130,9 @@ router.put(
     //Updates a course and returns no content
     const errors = validationResult(req);
 
+    // id of user requesting to make course changes
+    const requestorUserId = req.currentUser.id;
+
     // check if we have validation errors
     if (!errors.isEmpty()) {
       const errorMsgs = errors.array().map((err) => err.msg);
@@ -110,17 +141,26 @@ router.put(
       res.status(400).json({ errors: errorMsgs });
     } else {
       let course;
-      try {
-        course = await Course.findByPk(req.params.id);
-        if (course) {
+
+      // grab course to be updated from database
+      course = await Course.findByPk(req.params.id);
+
+      if (course) {
+        // id of user who owns the course being updated
+        let courseOwnerId = course.userId;
+
+        // if requestor is as owner, allow update
+        if (requestorUserId === courseOwnerId) {
           await course.update(req.body);
+          res.status(204).send("");
         } else {
-          res.sendStatus(404);
+          // requestor not authenticated to make changes
+          res.status(403).send("");
         }
-      } catch (err) {
-        throw err;
+      } else {
+        // course not found
+        res.sendStatus(404);
       }
-      res.status(204).send("");
     }
   })
 );
@@ -133,13 +173,26 @@ router.delete(
   "/courses/:id",
   authenticateUser,
   asyncHandler(async (req, res) => {
+    // id of user requesting to delete course
+    const requestorUserId = req.currentUser.id;
+
     //Deletes a course and returns no content
     try {
       let course = await Course.findByPk(req.params.id);
       if (course) {
-        course.destroy();
-        res.status(204).send("/");
+        // id of user who owns the course being deleted
+        let courseOwnerId = course.userId;
+
+        // if requestor is as owner, allow deletion
+        if (requestorUserId === courseOwnerId) {
+          course.destroy();
+          res.status(204).send("/");
+        } else {
+          // requestor not authenticated to delete
+          res.status(403).send("");
+        }
       } else {
+        // course not found
         res.status(404).send("");
       }
     } catch (er) {
