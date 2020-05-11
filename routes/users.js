@@ -30,12 +30,13 @@ router.get(
   authenticateUser,
   asyncHandler(async (req, res) => {
     const user = req.currentUser;
-    const userInfo = {};
-    userInfo.firstName = user.firstName;
-    userInfo.lastName = user.lastName;
-    userInfo.emailAddress = user.emailAddress;
-
-    res.json(userInfo);
+    if (user) {
+      const userInfo = {};
+      userInfo.firstName = user.firstName;
+      userInfo.lastName = user.lastName;
+      userInfo.emailAddress = user.emailAddress;
+      res.json(userInfo);
+    }
   })
 );
 
@@ -80,7 +81,7 @@ router.post(
         req.body.password = bcryptjs.hashSync(req.body.password);
         user = await User.create(req.body);
         if (user) {
-          res.status(201).redirect("/");
+          res.status(201).end();
         }
       } catch (er) {
         throw er;

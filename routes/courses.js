@@ -60,17 +60,14 @@ router.get(
         {
           model: User,
           as: "user",
+          attributes: ["firstName", "lastName", "emailAddress"],
         },
       ],
-      attributes: [
-        "id",
-        "title",
-        "description",
-        "estimatedTime",
-        "materialsNeeded",
-        "userId",
-      ],
+      attributes: {
+        exclude: ["createdAt", "updatedAt"],
+      },
     });
+    delete courses.dataValues.password;
     res.send(courses);
   })
 );
