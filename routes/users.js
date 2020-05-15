@@ -81,7 +81,7 @@ router.post(
         req.body.password = bcryptjs.hashSync(req.body.password);
         user = await User.create(req.body);
         if (user) {
-          res.status(201).end();
+          res.location(`/`).status(201).end();
         }
       } catch (er) {
         throw er;

@@ -104,7 +104,8 @@ router.post(
       try {
         course = Course.create(req.body);
         if (course) {
-          res.status(201).send("");
+          //res.status(201).send("");
+          res.location(`/courses/${course.id}`).status(201).end();
         } else {
           res.status(404).send("");
         }
