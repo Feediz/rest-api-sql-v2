@@ -98,7 +98,7 @@ router.post(
     } else {
       let course;
       try {
-        course = Course.create(req.body);
+        course = await Course.create(req.body);
         if (course) {
           //res.status(201).send("");
           res.location(`/courses/${course.id}`).status(201).end();
